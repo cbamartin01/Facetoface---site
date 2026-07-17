@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Plus, X, Search, MessageCircle, Trash2, Camera, ChevronLeft, ChevronRight, Gauge, Calendar } from "lucide-react";
 
-const WHATSAPP_SITE_NUMBER = "5490000000000"; // TODO: reemplazar por el WhatsApp real del sitio (código país + área + número, sin + ni espacios)
+const WHATSAPP_SITE_NUMBER = "5493515579543";
 
 const SUPABASE_URL = "https://oycobcpbzkqthmcnedem.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im95Y29iY3BiemtxdGhtY25lZGVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQyNDUzNjIsImV4cCI6MjA5OTgyMTM2Mn0.eUJkQDScxksGhI1LpNbSti7YurJsVLzvN43q1N5F9jY";
@@ -407,4 +407,96 @@ export default function FaceToFace() {
               <div style={{ fontFamily: "'Oswald',sans-serif", fontSize: 20, fontWeight: 700, marginBottom: 4 }}>Publicar auto</div>
               <div style={{ fontSize: 13, color: "#8B909B", marginBottom: 18 }}>Se publica al instante, visible para todos.</div>
 
-              <div st
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 10 }}>
+                <input placeholder="Marca *" value={form.brand} onChange={(e) => setForm({ ...form, brand: e.target.value })} style={inputStyle} />
+                <input placeholder="Modelo *" value={form.model} onChange={(e) => setForm({ ...form, model: e.target.value })} style={inputStyle} />
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 10 }}>
+                <select value={form.condition} onChange={(e) => setForm({ ...form, condition: e.target.value })} style={inputStyle}>
+                  <option value="0km">0km</option>
+                  <option value="usado">Usado</option>
+                </select>
+                <input placeholder="Año" type="number" value={form.year} onChange={(e) => setForm({ ...form, year: e.target.value })} style={inputStyle} />
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 10 }}>
+                <input placeholder="Precio (ARS)" type="number" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} style={inputStyle} />
+                <input placeholder="Kilómetros" type="number" disabled={form.condition === "0km"} value={form.condition === "0km" ? "" : form.km} onChange={(e) => setForm({ ...form, km: e.target.value })} style={{ ...inputStyle, opacity: form.condition === "0km" ? 0.4 : 1 }} />
+              </div>
+              <select value={form.fuel} onChange={(e) => setForm({ ...form, fuel: e.target.value })} style={{ ...inputStyle, width: "100%", marginBottom: 10 }}>
+                {["Nafta", "Diesel", "GNC", "Híbrido", "Eléctrico"].map((f) => <option key={f} value={f}>{f}</option>)}
+              </select>
+              <textarea placeholder="Descripción (estado, extras, etc.)" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} style={{ ...inputStyle, width: "100%", minHeight: 70, resize: "vertical", marginBottom: 10 }} />
+              <input placeholder="WhatsApp del vendedor * (ej: 5491122334455)" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value.replace(/[^\d]/g, "") })} style={{ ...inputStyle, width: "100%", marginBottom: 14 }} />
+
+              <div style={{ marginBottom: 14 }}>
+                <div style={{ fontSize: 12, color: "#8B909B", marginBottom: 8 }}>Fotos * (hasta 4)</div>
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                  {form.images.map((img, i) => (
+                    <div key={i} style={{ position: "relative", width: 68, height: 68 }}>
+                      <img src={img} style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: 6 }} />
+                      <button onClick={() => setForm((f) => ({ ...f, images: f.images.filter((_, idx) => idx !== i) }))} style={{ position: "absolute", top: -6, right: -6, background: "#E4572E", border: "none", borderRadius: "50%", width: 20, height: 20, color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <X size={12} />
+                      </button>
+                    </div>
+                  ))}
+                  {form.images.length < 4 && (
+                    <button onClick={() => fileInputRef.current.click()} style={{ width: 68, height: 68, borderRadius: 6, border: "1px dashed #3A3E47", background: "transparent", color: "#8B909B", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <Camera size={20} />
+                    </button>
+                  )}
+                </div>
+                <input ref={fileInputRef} type="file" accept="image/*" multiple hidden onChange={(e) => handleFiles(e.target.files)} />
+              </div>
+
+              <button onClick={submitListing} disabled={saving} className="ff-btn-primary" style={{ width: "100%", background: "#FFB020", color: "#14161A", border: "none", borderRadius: 8, padding: "13px", fontWeight: 600, fontSize: 14, cursor: saving ? "default" : "pointer", opacity: saving ? 0.7 : 1 }}>
+                {saving ? "Publicando..." : "Publicar ahora"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Sell modal */}
+      {showSell && (
+        <div onClick={() => setShowSell(false)} style={overlayStyle}>
+          <div onClick={(e) => e.stopPropagation()} style={{ ...modalStyle, maxWidth: 460, maxHeight: "88vh", overflowY: "auto" }} className="ff-scroll">
+            <button onClick={() => setShowSell(false)} style={closeBtnStyle}><X size={18} /></button>
+            <div style={{ padding: 22 }}>
+              <div style={{ fontFamily: "'Oswald',sans-serif", fontSize: 20, fontWeight: 700, marginBottom: 4 }}>Vendé tu usado</div>
+              <div style={{ fontSize: 13, color: "#8B909B", marginBottom: 18 }}>Contanos sobre tu auto y te contactamos por WhatsApp para tasarlo.</div>
+
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 10 }}>
+                <input placeholder="Marca *" value={sellForm.brand} onChange={(e) => setSellForm({ ...sellForm, brand: e.target.value })} style={inputStyle} />
+                <input placeholder="Modelo *" value={sellForm.model} onChange={(e) => setSellForm({ ...sellForm, model: e.target.value })} style={inputStyle} />
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 10 }}>
+                <input placeholder="Año" type="number" value={sellForm.year} onChange={(e) => setSellForm({ ...sellForm, year: e.target.value })} style={inputStyle} />
+                <input placeholder="Kilómetros" type="number" value={sellForm.km} onChange={(e) => setSellForm({ ...sellForm, km: e.target.value })} style={inputStyle} />
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 10 }}>
+                <select value={sellForm.fuel} onChange={(e) => setSellForm({ ...sellForm, fuel: e.target.value })} style={inputStyle}>
+                  {["Nafta", "Diesel", "GNC", "Híbrido", "Eléctrico"].map((f) => <option key={f} value={f}>{f}</option>)}
+                </select>
+                <select value={sellForm.state} onChange={(e) => setSellForm({ ...sellForm, state: e.target.value })} style={inputStyle}>
+                  {["Excelente", "Muy bueno", "Bueno", "Regular", "Para repuestos"].map((s) => <option key={s} value={s}>{s}</option>)}
+                </select>
+              </div>
+              <textarea placeholder="Comentarios (service al día, detalles, etc.)" value={sellForm.notes} onChange={(e) => setSellForm({ ...sellForm, notes: e.target.value })} style={{ ...inputStyle, width: "100%", minHeight: 60, resize: "vertical", marginBottom: 10 }} />
+              <input placeholder="Tu WhatsApp * (ej: 5491122334455)" value={sellForm.phone} onChange={(e) => setSellForm({ ...sellForm, phone: e.target.value.replace(/[^\d]/g, "") })} style={{ ...inputStyle, width: "100%", marginBottom: 16 }} />
+
+              <button onClick={sendSellRequest} className="ff-btn-primary" style={{ width: "100%", background: "#25D366", color: "#0B3B1F", border: "none", borderRadius: 8, padding: "13px", fontWeight: 600, fontSize: 14, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+                <MessageCircle size={18} fill="#0B3B1F" strokeWidth={0} /> Enviar por WhatsApp
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+const selStyle = { background: "#1E2127", border: "1px solid #2C3038", borderRadius: 8, padding: "10px 12px", color: "#F5F3EE", fontSize: 14 };
+const inputStyle = { background: "#14161A", border: "1px solid #2C3038", borderRadius: 8, padding: "10px 12px", color: "#F5F3EE", fontSize: 14, fontFamily: "inherit" };
+const overlayStyle = { position: "fixed", inset: 0, background: "rgba(10,11,13,0.75)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 50, padding: 16 };
+const modalStyle = { background: "#1A1C21", border: "1px solid #2C3038", borderRadius: 14, width: "100%", position: "relative" };
+const closeBtnStyle = { position: "absolute", top: 12, right: 12, background: "rgba(20,22,26,0.7)", border: "none", borderRadius: 8, width: 32, height: 32, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", zIndex: 5 };
+const navBtnStyle = { position: "absolute", top: "50%", transform: "translateY(-50%)", background: "rgba(20,22,26,0.7)", border: "none", borderRadius: "50%", width: 34, height: 34, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" };
